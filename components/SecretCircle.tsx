@@ -75,13 +75,13 @@ export default function SecretCircle() {
     setPosting(true);
     let imageUrl: string | null = null;
     if (imageFile) imageUrl = await uploadImage(imageFile);
-    const { error } = await supabase.from('posts').insert({
-      user: 'Anonymous',
-      handle: '@secret',
-      text: newPostText.trim(),
-      image: imageUrl,
-      likes: 0,
-    });
+        const { error } = await supabase.from('posts').insert({
+        user: 'Anonymous',
+        handle: '@secret',
+        text: newPostText.trim(),
+        image: imageUrl,
+        likes: 0,
+        } as never);
     if (error) alert('Failed to post.');
     else {
       setNewPostText('');
@@ -101,7 +101,7 @@ export default function SecretCircle() {
       liked ? updated.delete(post.id) : updated.add(post.id);
       return updated;
     });
-    const { error } = await supabase.from('posts').update({ likes: newLikes }).eq('id', post.id);
+const { error } = await supabase.from('posts').update({ likes: newLikes } as never).eq('id', post.id);
     if (error) {
       setPosts(prev => prev.map(p => p.id === post.id ? { ...p, likes: post.likes } : p));
     }
