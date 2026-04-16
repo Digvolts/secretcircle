@@ -1,65 +1,108 @@
-import Image from "next/image";
+'use client';
 
-export default function Home() {
+import { useState, useEffect } from 'react';
+import { createClient } from '@supabase/supabase-js';
+import { Heart, MessageCircle, Share2, Plus } from 'lucide-react';
+
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+);
+
+export default function SecretCircle() {
+  const [posts, setPosts] = useState<any[]>([]);
+  const [newPostText, setNewPostText] = useState('');
+  const [showModal, setShowModal] = useState(false);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+
+  useEffect(() => {
+    fetchPosts();
+  }, []);
+
+  async function fetchPosts() {
+    const { data } = await supabase.from('posts').select('*').order('created_at', { ascending: false });
+    setPosts(data || []);
+  }
+
+  async function createPost() {
+    if (!newPostText) return;
+    await supabase.from('posts').insert({
+      user: "You",
+      handle: "@yourhandle",
+      text: newPostText,
+      image: imagePreview,
+      likes: 0
+    });
+    setNewPostText('');
+    setImagePreview(null);
+    setShowModal(false);
+    fetchPosts();
+  }
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
+    <div className="min-h-screen bg-black text-white flex font-sans">
+      {/* SIDEBAR */}
+      <div className="w-72 border-r border-gray-800 p-6 fixed h-screen">
+        <div className="flex items-center gap-3 mb-10">
+          <div className="text-4xl">🔒</div>
+          <h1 className="text-4xl font-black">SecretCircle</h1>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+        <div className="space-y-2 text-xl">
+          <div className="flex items-center gap-4 px-6 py-4 hover:bg-gray-900 rounded-3xl cursor-pointer">🏠 Home</div>
+          <div className="flex items-center gap-4 px-6 py-4 hover:bg-gray-900 rounded-3xl cursor-pointer">🔍 Explore</div>
+          <div className="flex items-center gap-4 px-6 py-4 hover:bg-gray-900 rounded-3xl cursor-pointer">🔔 Notifications</div>
+          <div className="flex items-center gap-4 px-6 py-4 hover:bg-gray-900 rounded-3xl cursor-pointer">💬 DMs</div>
         </div>
-      </main>
+        <button onClick={() => setShowModal(true)} className="mt-12 w-full bg-white text-black font-bold text-2xl py-5 rounded-3xl hover:scale-105 transition">
+          + Drop Secret
+        </button>
+      </div>
+
+      {/* FEED */}
+      <div className="flex-1 ml-72 border-r border-gray-800">
+        <div className="sticky top-0 bg-black/90 p-6 border-b border-gray-800 flex justify-between items-center">
+          <h2 className="text-3xl font-bold">Home</h2>
+          <button onClick={() => alert('Invite code: SC-69X420Y\nSend only to people you trust 🔥')} className="bg-purple-600 px-8 py-3 rounded-3xl font-bold">Share Invite</button>
+        </div>
+
+        <div className="p-6 space-y-8 max-w-2xl mx-auto">
+          {posts.map((post) => (
+            <div key={post.id} className="bg-gray-900 rounded-3xl p-8">
+              <div className="flex gap-4">
+                <div className="w-12 h-12 bg-gradient-to-br from-pink-500 to-purple-500 rounded-2xl flex items-center justify-center text-3xl">🔥</div>
+                <div className="flex-1">
+                  <p className="font-bold">{post.user} <span className="text-gray-500">{post.handle}</span></p>
+                  <p className="text-gray-400 text-sm">{new Date(post.created_at).toLocaleString()}</p>
+                  <p className="text-xl mt-4 leading-relaxed">{post.text}</p>
+                  {post.image && <img src={post.image} className="mt-6 rounded-3xl w-full" />}
+                  <div className="flex gap-8 mt-8 text-gray-400">
+                    <button className="flex items-center gap-3 hover:text-red-500"><Heart /> {post.likes}</button>
+                    <button className="flex items-center gap-3 hover:text-blue-500"><MessageCircle /> 12</button>
+                    <button className="flex items-center gap-3 hover:text-green-500"><Share2 /></button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* POST MODAL */}
+      {showModal && (
+        <div className="fixed inset-0 bg-black/90 flex items-center justify-center z-50">
+          <div className="bg-gray-900 rounded-3xl w-full max-w-xl p-8">
+            <textarea value={newPostText} onChange={e => setNewPostText(e.target.value)} className="w-full h-48 bg-black border border-gray-700 rounded-3xl p-6 text-xl resize-none" placeholder="Spill the fucking tea..." />
+            <div className="flex gap-4 mt-4">
+              <label className="cursor-pointer flex-1 bg-gray-800 hover:bg-gray-700 rounded-3xl py-6 text-center text-xl">📸 Image</label>
+              <button onClick={() => alert('Voice note coming soon 🔥')} className="flex-1 bg-gray-800 hover:bg-gray-700 rounded-3xl text-3xl">🎤</button>
+            </div>
+            <div className="flex gap-4 mt-8">
+              <button onClick={() => setShowModal(false)} className="flex-1 py-6 text-xl font-bold border border-gray-700 rounded-3xl">Cancel</button>
+              <button onClick={createPost} className="flex-1 py-6 text-xl font-bold bg-white text-black rounded-3xl">POST TO THE CIRCLE</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
